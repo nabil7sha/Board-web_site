@@ -1,0 +1,169 @@
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+    {% block stylesheet %}{% endblock %}
+
+    <!-- تنسيقات الشريط العلوي والخلفية العامة للموقع -->
+    <style>
+        body {
+            background-color: #f0f2f5;
+        }
+        
+        .custom-navbar {
+            background-color: #ffffff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08); 
+            padding: 0.5rem 1rem;
+            border-bottom: 1px solid #e4e6eb;
+        }
+        
+        .custom-navbar .navbar-brand {
+            color: #1877f2 !important; 
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+        
+        .user-nav-link {
+            display: flex;
+            align-items: center;
+            font-weight: 600;
+            color: #050505 !important;
+            padding: 5px 12px !important;
+            border-radius: 20px;
+            transition: background-color 0.2s ease;
+        }
+        
+        .user-nav-link:hover {
+            background-color: #f0f2f5; 
+        }
+        
+        .nav-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: #e4e6eb;
+            color: #050505;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            font-weight: bold;
+            margin-right: 8px;
+            text-transform: uppercase;
+        }
+
+        .custom-dropdown-menu {
+            border-radius: 8px;
+            border: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            padding: 10px 0;
+            margin-top: 10px;
+        }
+        
+        .custom-dropdown-menu .dropdown-item, 
+        .custom-dropdown-menu button {
+            font-weight: 500;
+            padding: 8px 20px;
+            color: #050505;
+            transition: background-color 0.2s;
+        }
+        
+        .custom-dropdown-menu .dropdown-item:hover, 
+        .custom-dropdown-menu button:hover {
+            background-color: #f0f2f5;
+        }
+        
+        /* تأثير عند التمرير على زر تسجيل الخروج */
+        .logout-btn:hover {
+            background-color: #fce8e6 !important;
+        }
+        
+        /* تصميم أزرار الزوار (تسجيل الدخول / إنشاء حساب) */
+        .btn-login {
+            border-radius: 6px;
+            font-weight: bold;
+        }
+        .btn-signup {
+            background-color: #1877f2;
+            border-color: #1877f2;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+        .btn-signup:hover {
+            background-color: #166fe5;
+        }
+    </style>
+</head>
+<body>
+{% block body %}
+<!-- تغيير الكلاسات من navbar-dark bg-dark إلى التصميم المخصص custom-navbar -->
+<nav class="navbar navbar-expand-sm navbar-light custom-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="{% url 'home' %}">Django Boards</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#mainMenu" aria-controls="mainMenu" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+   <div class="collapse navbar-collapse" id="mainMenu">
+    {% if user.is_authenticated %}
+    
+    <ul class="navbar-nav ms-auto">
+        <li class="nav-item dropdown">
+            
+            <a class="nav-link dropdown-toggle user-nav-link" href="#" id="userMenu" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <!-- إضافة الصورة الرمزية للمستخدم -->
+                <div class="nav-avatar">
+                    {{ user.username|make_list|first }}
+                </div>
+                {{ user.username }}
+            </a>
+            
+            <div class="dropdown-menu dropdown-menu-end custom-dropdown-menu" aria-labelledby="userMenu">
+                <a class="dropdown-item" href="#">My account</a>
+                <a class="dropdown-item" href="{% url 'password_change' %}">Change password</a>
+                <div class="dropdown-divider"></div>
+                
+                <!-- الاحتفاظ بنموذج تسجيل الخروج الآمن الخاص بك مع تحسين تصميمه -->
+                <form method="post" action="{% url 'logout' %}" class="m-0 p-0">
+                    {% csrf_token %}
+                    <button type="submit" class="dropdown-item text-danger border-0 bg-transparent text-start w-100 logout-btn">Log out</button>
+                </form>
+                
+            </div>
+        </li>
+    </ul>
+    
+    {% else %}
+    
+    <div class="d-flex ms-auto align-items-center">
+        <a href="{% url 'login' %}" class="btn btn-outline-secondary btn-login ms-2">Log in</a>
+        <a href="{% url 'signup' %}" class="btn btn-primary btn-signup ms-2">Sign up</a>
+    </div>
+    
+    {% endif %}
+
+    </div>
+  </div>
+</nav>
+
+<!-- إضافة مسافة علوية لترتيب العناصر -->
+<div class="container mt-4">
+    <ol class="breadcrumb my-4">
+        {% block breadcrumb %}
+        {% endblock %}
+    </ol>
+
+    {% block content %}
+    {% endblock %}
+</div>
+{% endblock body %}
+
+<script src="{% static 'js/jquery-3.4.1.min.js' %}"></script>
+<script src="{% static 'js/popper.min.js' %}"></script>
+<script src="{% static 'js/bootstrap.min.js' %}"></script>
+
+</body>
+</html>

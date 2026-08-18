@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ topic.subject }}{% endblock %}
+
+{% block breadcrumb %}
+   <li class="breadcrumb-item"><a href="{% url 'home' %}">Boards</a></li>
+   <li class="breadcrumb-item"><a href="{% url 'board_topics' topic.Board.pk %}">{{ topic.Board.name }}</a></li>
+   <li class="breadcrumb-item active">{{ topic.subject }}</li>
+{% endblock %}
+
+{% block content %}
+<!-- تنسيقات CSS لتوحيد التصميم مع ستايل فيسبوك -->
+<style>
+    .post-card {
+        background: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        border: none;
+    }
+    .post-header {
+        padding: 15px;
+        display: flex;
+        align-items: center;
+    }
+    .post-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-right: 12px;
+        border: 1px solid #e4e6eb;
+    }
+    .post-meta {
+        display: flex;
+        flex-direction: column;
+    }
+    .post-author {
+        font-weight: 600;
+        color: #050505;
+        font-size: 1rem;
+    }
+    .post-date {
+        color: #65676b;
+        font-size: 0.85rem;
+        margin-top: 2px;
+    }
+    .post-body {
+        padding: 10px 15px 20px 15px;
+        font-size: 1.05rem;
+        color: #1c1e21;
+        line-height: 1.5;
+    }
+    .post-footer {
+        padding: 12px 15px;
+        border-top: 1px solid #ced0d4;
+        background-color: #f0f2f5;
+        border-radius: 0 0 8px 8px;
+        text-align: right;
+    }
+    .btn-facebook {
+        background-color: #1877f2;
+        border-color: #1877f2;
+        font-weight: bold;
+        color: white;
+        border-radius: 6px;
+        padding: 8px 16px;
+    }
+    .btn-facebook:hover {
+        background-color: #166fe5;
+        color: white;
+    }
+</style>
+
+<!-- زر الرد متاح للجميع في أعلى الصفحة (أخرجناه من الشرط) -->
+
+
+<!-- حلقة عرض الردود -->
+{% for post in topic.post.all %}
+<div class="post-card">
+    <div class="post-header">
+        <!-- استخدام الصورة الرمزية الخاصة بك -->
+        <img src="{% static 'img/user.png' %}" alt="{{ post.created_by.username }}" class="post-avatar">
+        
+        <div class="post-meta">
+            <span class="post-author">{{ post.created_by.username }}</span>
+            <span class="post-date">{{ post.created_dt|date:"F j, Y, g:i a" }}</span>
+        </div>
+    </div>
+    
+    <div class="post-body">
+        {{ post.message }}
+    </div>
+    
+    <!-- زر التعديل يظهر فقط لصاحب المنشور -->
+    {% if post.created_by == user %}
+    <div class="post-footer">
+        <a href="{% url 'edit_post' board_id=topic.Board.pk topic_id=topic.pk post_id=post.pk %}" class="btn btn-secondary btn-sm rounded-pill px-3">
+            Edit
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endfor %}
+
+<!-- زر الرد في أسفل الصفحة أيضاً لسهولة الوصول بعد قراءة المنشورات -->
+<div class="mt-4 mb-5">
+    <a href="{% url 'reply_topic' topic.Board.pk topic.pk %}" class="btn btn-facebook">
+        Reply to Topic
+    </a>
+</div>
+
+{% endblock %}

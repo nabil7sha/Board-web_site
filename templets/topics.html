@@ -1,0 +1,264 @@
+{% extends 'base.html' %}
+{% block title %}{{ board.name }} {% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item "><a href="{% url 'home' %}">Boards</a></li>
+    <li class="breadcrumb-item active">{{ board.name }}</li>
+{% endblock %}
+
+{% block content %}
+<style>
+    /* تصميم البطاقة الأساسية */
+    .post-card {
+        background: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        border: none;
+        overflow: hidden;
+    }
+    .post-header {
+        padding: 15px;
+        display: flex;
+        align-items: center;
+    }
+    .post-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background-color: #1877f2; 
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-right: 12px;
+        text-transform: uppercase;
+    }
+    .post-meta {
+        display: flex;
+        flex-direction: column;
+    }
+    .post-author {
+        font-weight: 600;
+        color: #050505;
+        font-size: 1rem;
+        text-decoration: none;
+    }
+    .post-date {
+        color: #65676b;
+        font-size: 0.85rem;
+        margin-top: 2px;
+    }
+    .post-body {
+        padding: 10px 15px 15px 15px;
+    }
+    .post-title {
+        font-size: 1.25rem;
+        font-weight: bold;
+        color: #050505;
+        text-decoration: none;
+        display: block;
+    }
+    .post-title:hover {
+        text-decoration: underline;
+        color: #1877f2;
+    }
+    .post-footer {
+        padding: 10px 15px;
+        display: flex;
+        justify-content: space-between;
+        color: #65676b;
+        font-size: 0.95rem;
+        border-top: 1px solid #ced0d4;
+        background-color: #fff;
+    }
+    
+    /* === تصميم قسم التعليق أسفل الكارد === */
+    .comment-section {
+        padding: 12px 15px 15px 15px;
+        background-color: #ffffff;
+        border-top: 1px solid #e4e6eb;
+    }
+    .comment-box {
+        display: flex;
+        align-items: flex-start;
+    }
+    .comment-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background-color: #e4e6eb;
+        color: #050505;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        font-weight: bold;
+        margin-right: 10px;
+        text-transform: uppercase;
+        flex-shrink: 0;
+    }
+    .comment-content {
+        background-color: #f0f2f5; /* لون فقاعة التعليق الرمادي */
+        padding: 8px 12px;
+        border-radius: 18px; /* جعل الحواف دائرية مثل تعليق فيسبوك */
+        max-width: calc(100% - 46px);
+    }
+    .comment-author {
+        font-size: 0.85rem; /* خط أصغر لاسم المستخدم */
+        font-weight: bold;
+        color: #050505;
+        display: block;
+        margin-bottom: 2px;
+    }
+    .comment-text {
+        font-size: 0.85rem; /* خط أصغر للنص */
+        color: #1c1e21;
+        line-height: 1.4;
+    }
+    
+    /* تصميم زر عرض المزيد */
+    .view-more-btn {
+        display: inline-block;
+        color: #65676b;
+        font-size: 0.85rem;
+        font-weight: bold;
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+    .view-more-btn:hover {
+        color: #1877f2;
+        text-decoration: underline;
+    }
+
+    .btn-facebook {
+        background-color: #1877f2;
+        border-color: #1877f2;
+        font-weight: bold;
+        color: white;
+        border-radius: 6px;
+        padding: 8px 16px;
+    }
+    .btn-facebook:hover {
+        background-color: #166fe5;
+        color: white;
+    }
+</style>
+
+<div class="mb-4">
+    <a href="{% url 'new_topic' board.pk %}" class="btn btn-facebook">
+        + Create New Topic
+    </a>
+</div>
+
+<!-- حاوية المنشورات -->
+<div class="posts-container">
+    {% for topic in topics %}
+    <div class="post-card">
+        <!-- ترويسة المنشور -->
+        <div class="post-header">
+            <div class="post-avatar">
+                {{ topic.created_by.username|make_list|first }}
+            </div>
+            <div class="post-meta">
+                <span class="post-author">{{ topic.created_by.username }}</span>
+                <span class="post-date">{{ topic.created_dt|date:"F j, Y, g:i a" }}</span>
+            </div>
+        </div>
+
+        <!-- محتوى المنشور الأساسي (عنوان الموضوع فقط) -->
+        <div class="post-body">
+            <a href="{% url 'topic_posts' board.pk topic.pk %}" class="post-title">
+                {{ topic.subject }}
+            </a>
+        </div>
+
+        <!-- الإحصائيات (المشاهدات والردود) -->
+        <div class="post-footer">
+            <div class="post-stat">
+                💬 {{ topic.comments }} Posts
+            </div>
+            <div class="post-stat">
+                👁️ {{ topic.views }} Views
+            </div>
+        </div>
+
+        <!-- قسم التعليق المصغر أسفل المنشور -->
+        {% with first_post=topic.post.first %}
+            {% if first_post %}
+            <div class="comment-section">
+                <div class="comment-box">
+                    <!-- صورة مصغرة لصاحب التعليق -->
+                    <div class="comment-avatar">
+                        {{ first_post.created_by.username|make_list|first }}
+                    </div>
+                    <!-- فقاعة التعليق -->
+                    <div class="comment-content">
+                        <span class="comment-author">{{ first_post.created_by.username }}</span>
+                        <div class="comment-text">
+                            {{ first_post.message|truncatechars:150 }}
+                        </div>
+                    </div>
+                </div>
+                <!-- زر View More تحت التعليق مباشرة بمسافة بادئة ليكون متناسق -->
+                <div style="margin-left: 46px; margin-top: 6px;">
+                    <a href="{% url 'topic_posts' board.pk topic.pk %}" class="view-more-btn">
+                        View more replies...
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        {% endwith %}
+    </div>
+    {% empty %}
+    <div class="alert alert-info text-center" style="border-radius: 8px;">
+        No topics here yet. Be the first to post!
+    </div>
+    {% endfor %}
+</div>
+
+<!-- شريط الترقيم (Pagination) -->
+{% if topics.has_other_pages %}
+  <nav aria-label="Topics pagination" class="mb-4 mt-3">
+    <ul class="pagination justify-content-center">
+      {% if topics.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ topics.previous_page_number }}">Previous</a>
+        </li>
+      {% else %}
+        <li class="page-item disabled">
+          <span class="page-link">Previous</span>
+        </li>
+      {% endif %}
+
+      {% for page_num in topics.paginator.page_range %}
+        {% if topics.number == page_num %}
+          <li class="page-item active">
+            <span class="page-link" style="background-color: #1877f2; border-color: #1877f2;">
+              {{ page_num }}
+              <span class="sr-only">(current)</span>
+            </span>
+          </li>
+        {% else %}
+          <li class="page-item">
+            <a class="page-link" href="?page={{ page_num }}">{{ page_num }}</a>
+          </li>
+        {% endif %}
+      {% endfor %}
+
+      {% if topics.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ topics.next_page_number }}">Next</a>
+        </li>
+      {% else %}
+        <li class="page-item disabled">
+          <span class="page-link">Next</span>
+        </li>
+      {% endif %}
+    </ul>
+  </nav>
+{% endif %}
+
+{% endblock %}

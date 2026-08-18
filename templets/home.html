@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+
+{% block title %}Boards{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item active">Boards</li>
+{% endblock %}
+
+{% block content %}
+<!-- ستايل البطاقات لإضافة تأثيرات حركية جذابة (Hover Effects) -->
+<style>
+    .board-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border-radius: 12px;
+        border: none;
+        background: #ffffff;
+    }
+    .board-card:hover {
+        transform: translateY(-7px);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.15) !important;
+    }
+    .board-icon {
+        font-size: 2.5rem;
+        color: #343a40;
+        opacity: 0.8;
+    }
+    .board-title a {
+        color: #2c3e50;
+        font-weight: 700;
+        text-decoration: none;
+    }
+    .board-title a:hover {
+        color: #007bff;
+    }
+</style>
+
+<div class="row">
+    {% for board in boards %}
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100 shadow-sm board-card p-2">
+            <div class="card-body text-center">
+                <!-- أيقونة تعبيرية لكل بطاقة -->
+                <div class="mb-3 board-icon">
+                    📚
+                </div>
+                
+                <h5 class="card-title board-title mb-3">
+                    <a href="{% url 'board_topics' board.pk %}">{{ board.name }}</a>
+                </h5>
+                <p class="card-text text-muted small mb-4" style="min-height: 40px;">
+                    {{ board.description }}
+                </p>
+                
+                <div class="d-flex justify-content-around border-top pt-3 text-muted small">
+                    <div>
+                        <strong>{{ board.get_post_count }}</strong>
+                        <span class="d-block">Posts</span>
+                    </div>
+                    <div>
+                        <strong>{{ board.topics.count }}</strong>
+                        <span class="d-block">Topics</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-footer bg-light border-0 text-center text-muted" style="font-size: 0.8rem; border-radius: 0 0 12px 12px;">
+                {% with post=board.get_last_post %}
+                    {% if post %}
+                        Last post by <strong>{{ post.created_by.username }}</strong><br>
+                        {{ post.created_dt|date:"M d, Y" }}
+                    {% else %}
+                        No Posts Yet
+                    {% endif %}
+                {% endwith %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- الترقيم (Pagination) يبقى كما هو دون تغيير -->
+{% if boards.has_other_pages %}
+  <nav aria-label="Boards pagination" class="mb-4 mt-2">
+    <ul class="pagination justify-content-center">
+      {% if boards.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ boards.previous_page_number }}">Previous</a>
+        </li>
+      {% else %}
+        <li class="page-item disabled">
+          <span class="page-link">Previous</span>
+        </li>
+      {% endif %}
+
+      {% for page_num in boards.paginator.page_range %}
+        {% if boards.number == page_num %}
+          <li class="page-item active">
+            <span class="page-link">
+              {{ page_num }}
+              <span class="sr-only">(current)</span>
+            </span>
+          </li>
+        {% else %}
+          <li class="page-item">
+            <a class="page-link" href="?page={{ page_num }}">{{ page_num }}</a>
+          </li>
+        {% endif %}
+      {% endfor %}
+
+      {% if boards.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ boards.next_page_number }}">Next</a>
+        </li>
+      {% else %}
+        <li class="page-item disabled">
+          <span class="page-link">Next</span>
+        </li>
+      {% endif %}
+    </ul>
+  </nav>
+{% endif %}
+
+{% endblock %}

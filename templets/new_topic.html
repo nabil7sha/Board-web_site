@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% block title %}Start a New Topic{% endblock %}
+
+{% block breadcrumb %}
+  <li class="breadcrumb-item"><a href="{% url 'home' %}">Boards</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'board_topics' board.pk %}">{{ board.name }}</a></li>
+  <li class="breadcrumb-item active">New topic</li>
+{% endblock %}
+
+{% block content %}
+<style>
+    /* تصميم بطاقة الفورم */
+    .form-card {
+        background: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.1);
+        border: none;
+        overflow: hidden;
+        max-width: 800px; /* تحديد عرض مناسب للفورم لكي لا يكون ممتداً جداً في الشاشات الكبيرة */
+        margin: 0 auto 30px auto; /* توسيط البطاقة */
+    }
+    .form-header {
+        background-color: #f0f2f5;
+        padding: 15px 20px;
+        border-bottom: 1px solid #e4e6eb;
+        font-weight: bold;
+        color: #1c1e21;
+        font-size: 1.15rem;
+    }
+    .form-body {
+        padding: 25px 20px;
+    }
+    
+    /* تصميم أزرار فيسبوك */
+    .btn-facebook {
+        background-color: #1877f2;
+        border-color: #1877f2;
+        font-weight: bold;
+        color: white;
+        border-radius: 6px;
+        padding: 8px 24px;
+        transition: background-color 0.2s ease;
+    }
+    .btn-facebook:hover {
+        background-color: #166fe5;
+        color: white;
+    }
+    .btn-cancel {
+        background-color: #e4e6eb;
+        color: #050505;
+        font-weight: bold;
+        border-radius: 6px;
+        padding: 8px 20px;
+        border: none;
+        margin-right: 12px;
+        text-decoration: none;
+        transition: background-color 0.2s ease;
+    }
+    .btn-cancel:hover {
+        background-color: #d8dadf;
+        color: #050505;
+        text-decoration: none;
+    }
+</style>
+
+<div class="form-card">
+    <!-- ترويسة البطاقة -->
+    <div class="form-header">
+        📝 Create a New Topic in {{ board.name }}
+    </div>
+    
+    <!-- جسم البطاقة الذي يحتوي على الفورم -->
+    <div class="form-body">
+        <form method="post" novalidate>
+            {% csrf_token %}
+            
+            <!-- استدعاء حقول الفورم كما هي في كودك الأصلي -->
+            {% include 'includes/form.html' %}
+            
+            <!-- أزرار الإرسال والإلغاء مع محاذاة لليمين -->
+            <div class="mt-4 d-flex justify-content-end align-items-center">
+                <a href="{% url 'board_topics' board.pk %}" class="btn btn-cancel">Cancel</a>
+                <button type="submit" class="btn btn-facebook">Post Topic</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
