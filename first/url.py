@@ -1,5 +1,10 @@
 from django.urls import path
 from . import views
+
+# 1. استدعاء مكتبات الميديا والإعدادات
+from django.conf import settings
+from django.conf.urls.static import static
+
 urlpatterns = [
     path('',views.home,name='home'),
     path('about/',views.about,name='about'),
@@ -8,5 +13,8 @@ urlpatterns = [
     path('boards/<int:board_id>/topics/<int:topic_id>', views.topic_posts, name='topic_posts'),
     path('boards/<int:board_id>/topics/<int:topic_id>/reply/', views.reply_topic, name='reply_topic'),
     path('boards/<int:board_id>/topics/<int:topic_id>/posts/<int:post_id>/edit/', views.PostUpdateView.as_view(), name='edit_post'),
-    
 ]
+
+# 2. إضافة مسار الصور في النهاية لكي يتعرف جانغو عليها في وضع التطوير (DEBUG)
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

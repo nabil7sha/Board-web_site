@@ -52,9 +52,9 @@ def board_topics(request,board_id):
 @login_required
 def new_topic(request,board_id):
     board = get_object_or_404(Board,pk=board_id)
-  #  user = User.objects.first()
     if request.method == "POST":
-        form =NewTopicForm(request.POST)
+        # تمت إضافة request.FILES لاستقبال الصورة
+        form = NewTopicForm(request.POST, request.FILES) 
         if form.is_valid():
             topic = form.save(commit=False)
             topic.Board = board
@@ -65,13 +65,12 @@ def new_topic(request,board_id):
                 message=form.cleaned_data.get('message'),
                 created_by = request.user,
                 topic=topic
-
             )
-            return redirect('board_topics',board_id=board.pk)
+            return redirect('board_topics', board_id=board.pk)
     else:
         form = NewTopicForm()
 
-    return render(request,'new_topic.html',{'board':board,'form':form})
+    return render(request, 'new_topic.html', {'board': board, 'form': form})
 
 
 

@@ -71,7 +71,7 @@
     
     <!-- جسم البطاقة الذي يحتوي على الفورم -->
     <div class="form-body">
-        <form method="post" novalidate>
+        <form method="post" enctype="multipart/form-data" novalidate>
             {% csrf_token %}
             
             <!-- استدعاء حقول الفورم كما هي في كودك الأصلي -->
