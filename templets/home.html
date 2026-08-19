@@ -7,78 +7,144 @@
 {% endblock %}
 
 {% block content %}
-<!-- ستايل البطاقات لإضافة تأثيرات حركية جذابة (Hover Effects) -->
 <style>
+    /* التنسيق الأساسي للبطاقة */
     .board-card {
         transition: transform 0.3s ease, box-shadow 0.3s ease;
-        border-radius: 12px;
+        border-radius: 16px; /* حواف دائرية ناعمة وعصرية */
         border: none;
-        background: #ffffff;
+        overflow: hidden;
+        min-height: 280px; /* توحيد ارتفاع البطاقات */
+        display: flex;
+        flex-direction: column;
     }
     .board-card:hover {
         transform: translateY(-7px);
-        box-shadow: 0 12px 24px rgba(0,0,0,0.15) !important;
+        box-shadow: 0 15px 30px rgba(0,0,0,0.15) !important;
     }
-    .board-icon {
-        font-size: 2.5rem;
-        color: #343a40;
+    
+    /* === تصميم البطاقة التي تحتوي على خلفية === */
+    .image-card {
+        background-size: cover !important;
+        background-position: center !important;
+        position: relative;
+    }
+    /* التدرج السحري: شفاف من الأعلى، وداكن من الأسفل لحماية النص */
+    .image-card-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 75%;
+        background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.6) 45%, rgba(0,0,0,0) 100%);
+        z-index: 1;
+    }
+    .image-card-content {
+        position: relative;
+        z-index: 2;
+        padding: 20px;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end; /* دفع المحتوى للأسفل */
+        text-align: left;
+    }
+    .image-card .board-title a {
+        color: #ffffff;
+        font-weight: 800;
+        font-size: 1.4rem;
+        text-decoration: none;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.4);
+    }
+    .image-card .board-title a:hover {
+        text-decoration: underline;
+    }
+
+    /* === تصميم البطاقة الافتراضية (بدون صورة) === */
+    .default-card {
+        background: #ffffff;
+        text-align: center;
+        padding: 20px;
+    }
+    .default-card .board-icon {
+        font-size: 3rem;
         opacity: 0.8;
+        margin-top: 10px;
+        margin-bottom: 15px;
     }
-    .board-title a {
-        color: #2c3e50;
-        font-weight: 700;
+    .default-card .board-title a {
+        color: #050505;
+        font-weight: 800;
+        font-size: 1.4rem;
         text-decoration: none;
     }
-    .board-title a:hover {
-        color: #007bff;
+    .default-card .board-title a:hover {
+        color: #1877f2;
     }
 </style>
 
 <div class="row">
     {% for board in boards %}
     <div class="col-md-6 col-lg-4 mb-4">
-        <div class="card h-100 shadow-sm board-card p-2">
-            <div class="card-body text-center">
-                <!-- أيقونة تعبيرية لكل بطاقة -->
-                <div class="mb-3 board-icon">
-                    📚
-                </div>
-                
-                <h5 class="card-title board-title mb-3">
+        
+        {% if board.image %}
+        <!-- ==== تصميم البطاقة كصورة خلفية كاملة ==== -->
+        <div class="card shadow-sm board-card image-card" style="background: url('{{ board.image.url }}');">
+            <!-- طبقة التدرج الداكنة من الأسفل -->
+            <div class="image-card-overlay"></div>
+            
+            <!-- المحتوى الذي يظهر فوق الصورة -->
+            <div class="image-card-content">
+                <h5 class="card-title board-title mb-2">
                     <a href="{% url 'board_topics' board.pk %}">{{ board.name }}</a>
                 </h5>
-                <p class="card-text text-muted small mb-4" style="min-height: 40px;">
+                <p class="card-text text-light small mb-3" style="opacity: 0.85; line-height: 1.5;">
                     {{ board.description }}
                 </p>
                 
-                <div class="d-flex justify-content-around border-top pt-3 text-muted small">
+                <div class="d-flex justify-content-between border-top pt-3 small text-light" style="border-color: rgba(255,255,255,0.2) !important;">
                     <div>
-                        <strong>{{ board.get_post_count }}</strong>
-                        <span class="d-block">Posts</span>
+                        <strong class="fs-6">{{ board.get_post_count }}</strong>
+                        <span class="d-block" style="opacity: 0.8;">Posts</span>
                     </div>
                     <div>
-                        <strong>{{ board.topics.count }}</strong>
-                        <span class="d-block">Topics</span>
+                        <strong class="fs-6">{{ board.topics.count }}</strong>
+                        <span class="d-block" style="opacity: 0.8;">Topics</span>
                     </div>
                 </div>
             </div>
+        </div>
+        
+        {% else %}
+        <!-- ==== التصميم الأبيض الافتراضي (في حال عدم وجود صورة) ==== -->
+        <div class="card shadow-sm board-card default-card">
+            <div class="board-icon">📚</div>
             
-            <div class="card-footer bg-light border-0 text-center text-muted" style="font-size: 0.8rem; border-radius: 0 0 12px 12px;">
-                {% with post=board.get_last_post %}
-                    {% if post %}
-                        Last post by <strong>{{ post.created_by.username }}</strong><br>
-                        {{ post.created_dt|date:"M d, Y" }}
-                    {% else %}
-                        No Posts Yet
-                    {% endif %}
-                {% endwith %}
+            <h5 class="card-title board-title mb-2">
+                <a href="{% url 'board_topics' board.pk %}">{{ board.name }}</a>
+            </h5>
+            <p class="card-text text-muted small mb-auto" style="line-height: 1.5;">
+                {{ board.description }}
+            </p>
+            
+            <div class="d-flex justify-content-around border-top pt-3 mt-3 text-muted small">
+                <div>
+                    <strong class="text-dark fs-6">{{ board.get_post_count }}</strong>
+                    <span class="d-block mt-1">Posts</span>
+                </div>
+                <div>
+                    <strong class="text-dark fs-6">{{ board.topics.count }}</strong>
+                    <span class="d-block mt-1">Topics</span>
+                </div>
             </div>
         </div>
+        {% endif %}
+        
     </div>
     {% endfor %}
 </div>
 
-<!-- الترقيم (Pagination) يبقى كما هو دون تغيير -->
+<!-- شريط الترقيم (Pagination) -->
 {% if boards.has_other_pages %}
   <nav aria-label="Boards pagination" class="mb-4 mt-2">
     <ul class="pagination justify-content-center">
@@ -95,7 +161,7 @@
       {% for page_num in boards.paginator.page_range %}
         {% if boards.number == page_num %}
           <li class="page-item active">
-            <span class="page-link">
+            <span class="page-link" style="background-color: #1877f2; border-color: #1877f2;">
               {{ page_num }}
               <span class="sr-only">(current)</span>
             </span>
