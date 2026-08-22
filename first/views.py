@@ -6,7 +6,7 @@ from .models import Topic,Post
 from django.utils.decorators import method_decorator
 from django.utils import timezone
 from django.views.generic import UpdateView
-
+from django.http import JsonResponse
 from .forms import NewTopicForm,PostForm
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count
@@ -123,3 +123,22 @@ class PostUpdateView(UpdateView):
 def about(request):
 
     return HttpResponse(request,"yes")
+
+@login_required
+def like_post(request, board_id, topic_id, post_id):
+    post = get_object_or_404(Post, pk=post_id)
+    
+    # إذا كان المستخدم قد أعجب بالمنشور مسبقاً، نقوم بإزالة الإعجاب
+    if request.user in post.likes.all():
+        post.likes.remove(request.user)
+        is_liked = False
+    # إذا لم يكن معجباً، نقوم بإضافة الإعجاب
+    else:
+        post.likes.add(request.user)
+        is_liked = True
+        
+    # نرسل النتيجة كبيانات JSON لكي يقرأها الجافاسكريبت بدون تحديث الصفحة
+    return JsonResponse({
+        'is_liked': is_liked,
+        'likes_count': post.likes.count()
+    })

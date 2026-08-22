@@ -56,7 +56,6 @@
         border-top: 1px solid #ced0d4;
         background-color: #f0f2f5;
         border-radius: 0 0 8px 8px;
-        text-align: right;
     }
     .btn-facebook {
         background-color: #1877f2;
@@ -71,9 +70,6 @@
         color: white;
     }
 </style>
-
-<!-- زر الرد متاح للجميع في أعلى الصفحة (أخرجناه من الشرط) -->
-
 
 <!-- حلقة عرض الردود -->
 {% for post in topic.post.all %}
@@ -92,22 +88,92 @@
         {{ post.message }}
     </div>
     
-    <!-- زر التعديل يظهر فقط لصاحب المنشور -->
-    {% if post.created_by == user %}
-    <div class="post-footer">
-        <a href="{% url 'edit_post' board_id=topic.Board.pk topic_id=topic.pk post_id=post.pk %}" class="btn btn-secondary btn-sm rounded-pill px-3">
-            Edit
-        </a>
+    <!-- منطقة أزرار الإجراءات أسفل المنشور -->
+    <div class="post-footer d-flex align-items-center gap-2">
+        
+        <!-- زر الإعجاب التفاعلي -->
+        <button class="btn btn-sm like-btn rounded-pill px-3 {% if user in post.likes.all %}btn-primary{% else %}btn-outline-primary{% endif %}" 
+                data-url="{% url 'like_post' topic.Board.pk topic.pk post.pk %}">
+            <span class="like-icon">{% if user in post.likes.all %}❤️{% else %}🤍{% endif %}</span> 
+            <span class="like-text">{% if user in post.likes.all %}Liked{% else %}Like{% endif %}</span>
+            (<span class="like-count fw-bold">{{ post.likes.count }}</span>)
+        </button>
+
+        <!-- زر التعديل يظهر فقط لصاحب المنشور -->
+        {% if posts.created_by == user %}
+            <a href="{% url 'edit_post' board_id=topic.Board.pk topic_id=topic.pk post_id=post.pk %}" class="btn btn-secondary btn-sm rounded-pill px-3">
+                Edit
+            </a>
+        {% endif %}
     </div>
-    {% endif %}
-</div>
+
+</div> <!-- هنا تنتهي بطاقة المنشور (Card) -->
 {% endfor %}
 
-<!-- زر الرد في أسفل الصفحة أيضاً لسهولة الوصول بعد قراءة المنشورات -->
+<!-- زر الرد في أسفل الصفحة -->
 <div class="mt-4 mb-5">
     <a href="{% url 'reply_topic' topic.Board.pk topic.pk %}" class="btn btn-facebook">
         Reply to Topic
     </a>
 </div>
 
+<!-- كود الجافاسكريبت السحري الذي يقرأ كود الحماية بشكل صحيح -->
+<script>
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const csrftoken = getCookie('csrftoken');
+    const likeButtons = document.querySelectorAll('.like-btn');
+    
+    likeButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const url = this.getAttribute('data-url');
+            const btn = this;
+            
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken,
+                    'Content-Type': 'application/json'
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                const icon = btn.querySelector('.like-icon');
+                const text = btn.querySelector('.like-text');
+                const count = btn.querySelector('.like-count');
+                
+                if (count) count.textContent = data.likes_count;
+                
+                if (data.is_liked) {
+                    btn.classList.remove('btn-outline-primary');
+                    btn.classList.add('btn-primary');
+                    if(icon) icon.textContent = '❤️';
+                    if(text) text.textContent = 'Liked';
+                } else {
+                    btn.classList.remove('btn-primary');
+                    btn.classList.add('btn-outline-primary');
+                    if(icon) icon.textContent = '🤍';
+                    if(text) text.textContent = 'Like';
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    });
+});
+</script>
 {% endblock %}

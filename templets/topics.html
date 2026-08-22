@@ -185,16 +185,30 @@
             {% endif %}
         </div>
 
-        <!-- الإحصائيات (المشاهدات والردود) -->
-        <div class="post-footer">
-            <div class="post-stat">
-                💬 {{ topic.comments }} Posts
-            </div>
-            <div class="post-stat">
-                👁️ {{ topic.views }} Views
+        <div class="post-footer d-flex justify-content-between align-items-center">
+            
+            <!-- زر الإعجاب (يعمل على المنشور الأول للموضوع) -->
+            {% with first_post=topic.posts.first %}
+                {% if first_post %}
+                <button class="btn btn-sm like-btn rounded-pill px-3 {% if user in first_post.likes.all %}btn-primary{% else %}btn-outline-primary{% endif %}" 
+                        data-url="{% url 'like_post' board.pk topic.pk first_post.pk %}">
+                    <span class="like-icon">{% if user in first_post.likes.all %}❤️{% else %}🤍{% endif %}</span> 
+                    (<span class="like-count fw-bold">{{ first_post.likes.count }}</span>)
+                </button>
+                {% else %}
+                <div></div> <!-- مساحة فارغة في حال لم يوجد منشور -->
+                {% endif %}
+            {% endwith %}
+
+            <div class="d-flex gap-3">
+                <div class="post-stat text-muted">
+                    💬 {{ topic.comments }} Posts
+                </div>
+                <div class="post-stat text-muted">
+                    👁️ {{ topic.views }} Views
+                </div>
             </div>
         </div>
-
         <!-- قسم التعليق المصغر أسفل المنشور -->
         {% with first_post=topic.post.first %}
             {% if first_post %}

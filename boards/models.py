@@ -30,6 +30,7 @@ class Post(models.Model):
         created_by=models.ForeignKey(User,related_name='post',on_delete=models.CASCADE)
         created_dt=models.DateTimeField(auto_now_add=True)
         updated_dt = models.DateTimeField(null=True)
+        likes = models.ManyToManyField(User, related_name='liked_posts', blank=True)
         def __str__(self):
          truncted_message = Truncator(self.message)
          return truncted_message.chars(30)
