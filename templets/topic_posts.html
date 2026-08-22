@@ -9,6 +9,11 @@
 {% endblock %}
 
 {% block content %}
+
+
+<form id="csrf-form" style="display: none;">
+    {% csrf_token %}
+</form>
 <!-- تنسيقات CSS لتوحيد التصميم مع ستايل فيسبوك -->
 <style>
     .post-card {
@@ -118,60 +123,65 @@
 </div>
 
 <!-- كود الجافاسكريبت السحري الذي يقرأ كود الحماية بشكل صحيح -->
+<!-- كود التفاعل المباشر (AJAX) -->
 <script>
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
-}
-
 document.addEventListener('DOMContentLoaded', function() {
-    const csrftoken = getCookie('csrftoken');
+    // 1. جلب كود الحماية من الفورم المخفي بأمان
+    const csrfInput = document.querySelector('#csrf-form input[name=csrfmiddlewaretoken]');
+    if (!csrfInput) {
+        console.error("لم يتم العثور على كود الحماية CSRF!");
+        return;
+    }
+    const csrfToken = csrfInput.value;
+
     const likeButtons = document.querySelectorAll('.like-btn');
     
     likeButtons.forEach(button => {
         button.addEventListener('click', function(e) {
-            e.preventDefault();
+            e.preventDefault(); // منع الزر من تحديث الصفحة
             const url = this.getAttribute('data-url');
             const btn = this;
             
+            // 2. إرسال الإعجاب إلى السيرفر
             fetch(url, {
                 method: 'POST',
                 headers: {
-                    'X-CSRFToken': csrftoken,
+                    'X-CSRFToken': csrfToken,
                     'Content-Type': 'application/json'
                 },
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    // لو جانغو زعل ورفض الطلب، نرمي خطأ
+                    throw new Error('السيرفر رفض الطلب، رمز الخطأ: ' + response.status);
+                }
+                return response.json();
+            })
             .then(data => {
                 const icon = btn.querySelector('.like-icon');
                 const text = btn.querySelector('.like-text');
                 const count = btn.querySelector('.like-count');
                 
+                // 3. تحديث العدد والألوان فوراً
                 if (count) count.textContent = data.likes_count;
                 
                 if (data.is_liked) {
                     btn.classList.remove('btn-outline-primary');
                     btn.classList.add('btn-primary');
-                    if(icon) icon.textContent = '❤️';
-                    if(text) text.textContent = 'Liked';
+                    if (icon) icon.textContent = '❤️';
+                    if (text) text.textContent = 'Liked';
                 } else {
                     btn.classList.remove('btn-primary');
                     btn.classList.add('btn-outline-primary');
-                    if(icon) icon.textContent = '🤍';
-                    if(text) text.textContent = 'Like';
+                    if (icon) icon.textContent = '🤍';
+                    if (text) text.textContent = 'Like';
                 }
             })
-            .catch(error => console.error('Error:', error));
+            .catch(error => {
+                // الآن لن يكون الخطأ صامتاً! ستظهر لك رسالة واضحة
+                alert("حدث خطأ يمنع الإعجاب: " + error.message);
+                console.error(error);
+            });
         });
     });
 });
