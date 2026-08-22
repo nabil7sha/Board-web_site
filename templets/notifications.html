@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}Notifications{% endblock %}
+
+{% block content %}
+<div class="container my-4" style="max-width: 600px;">
+    <h3 class="mb-4">Your Notifications</h3>
+
+    <div class="list-group shadow-sm">
+        {% for n in notifications %}
+            <a href="{% url 'topic_posts' n.post.topic.Board.pk n.post.topic.pk %}" class="list-group-item list-group-item-action p-3 {% if not n.is_read %}bg-light{% endif %}">
+                <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1 text-dark font-weight-bold">
+                        💬 <strong>{{ n.from_user.username }}</strong> replied to your topic.
+                    </h5>
+                    <small class="text-muted">{{ n.created_at|timesince }} ago</small>
+                </div>
+                <p class="mb-1 text-muted mt-2">
+                    "{{ n.post.message|truncatechars:100 }}"
+                </p>
+            </a>
+        {% empty %}
+            <div class="text-center p-4 bg-white rounded shadow-sm">
+                <p class="text-muted mb-0">No notifications yet!</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

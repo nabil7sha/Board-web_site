@@ -97,11 +97,23 @@ def reply_topic(request, board_id,topic_id):
             post.created_by = request.user
             post.save()
 
+            # --- كود إرسال الإشعار الجديد ---
+            from .models import Notification # استدعاء الجدول
+            
+            # نرسل الإشعار فقط إذا كان الشخص الذي رد ليس هو نفسه صاحب الموضوع
+            if request.user != topic.created_by:
+                Notification.objects.create(
+                    to_user=topic.created_by,
+                    from_user=request.user,
+                    notification_type='comment',
+                    post=post
+                )
+            # -------------------------------
+
             return redirect('topic_posts',board_id=board_id, topic_id = topic_id)
     else:
         form = PostForm()
     return render(request,'reply_topic.html',{'topic':topic,'form':form})
-
 
 
  
@@ -153,3 +165,12 @@ def like_post(request, board_id, topic_id, post_id):
         'is_liked': is_liked,
         'likes_count': post.likes.count()
     })
+@login_required
+def notifications_list(request):
+    # جلب إشعارات المستخدم الحالي وترتيبها من الأحدث للأقدم
+    notifications = request.user.notifications.all().order_by('-created_at')
+    
+    # (اختياري) تحديث حالة الإشعارات لتصبح "مقروءة" بمجرد فتح الصفحة
+    request.user.notifications.filter(is_read=False).update(is_read=True)
+    
+    return render(request, 'notifications.html', {'notifications': notifications})

@@ -155,6 +155,19 @@ body {
 <button id="darkModeToggle" class="btn btn-outline-secondary rounded-pill ms-3">
     🌙
 </button>
+<!-- أيقونة الجرس مع عدد الإشعارات -->
+{% if user.is_authenticated %}
+<li class="nav-item me-3 d-flex align-items-center">
+    <a href="{% url 'notifications_list' %}" class="nav-link position-relative" style="font-size: 1.2rem;" title="Notifications">
+        🔔
+        {% if user.notifications.count > 0 %}
+        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">
+            {{ user.notifications.count }}
+        </span>
+        {% endif %}
+    </a>
+</li>
+{% endif %}
    <div class="collapse navbar-collapse" id="mainMenu">
     {% if user.is_authenticated %}
     
