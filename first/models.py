@@ -35,4 +35,33 @@ class Post(models.Model):
         def __str__(self):
          truncted_message = Truncator(self.message)
          return truncted_message.chars(30)
+
+
+class Notification(models.Model):
+    # الخيارات المتاحة للإشعار
+    NOTIFICATION_TYPES = (
+        ('like', 'Like'),
+        ('comment', 'Comment')
+    )
+    
+    # الشخص الذي سيستلم الإشعار (صاحب المنشور)
+    to_user = models.ForeignKey(User, related_name='notifications', on_delete=models.CASCADE)
+    
+    # الشخص الذي قام بالتفاعل (من ضغط إعجاب أو كتب تعليق)
+    from_user = models.ForeignKey(User, related_name='sent_notifications', on_delete=models.CASCADE)
+    
+    # نوع الإشعار (هل هو إعجاب أم تعليق؟)
+    notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPES)
+    
+    # المنشور الذي حدث عليه التفاعل
+    post = models.ForeignKey('Post', on_delete=models.CASCADE, null=True, blank=True)
+    
+    # حالة الإشعار (هل شاهده المستخدم أم لا لكي نظهر النقطة الحمراء)
+    is_read = models.BooleanField(default=False)
+    
+    # وقت حدوث الإشعار
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"To: {self.to_user.username} | From: {self.from_user.username} | Type: {self.notification_type}"
 # Create your models here.

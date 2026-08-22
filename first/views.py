@@ -6,10 +6,11 @@ from .models import Topic,Post
 from django.utils.decorators import method_decorator
 from django.utils import timezone
 from django.views.generic import UpdateView
-
+from .models import Notification
 from .forms import NewTopicForm,PostForm
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count
+from django.http import JsonResponse
 from django.core.paginator import Paginator
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 
@@ -96,11 +97,23 @@ def reply_topic(request, board_id,topic_id):
             post.created_by = request.user
             post.save()
 
+            # --- كود إرسال الإشعار الجديد ---
+            from .models import Notification # استدعاء الجدول
+            
+            # نرسل الإشعار فقط إذا كان الشخص الذي رد ليس هو نفسه صاحب الموضوع
+            if request.user != topic.created_by:
+                Notification.objects.create(
+                    to_user=topic.created_by,
+                    from_user=request.user,
+                    notification_type='comment',
+                    post=post
+                )
+            # -------------------------------
+
             return redirect('topic_posts',board_id=board_id, topic_id = topic_id)
     else:
         form = PostForm()
     return render(request,'reply_topic.html',{'topic':topic,'form':form})
-
 
 
  
@@ -123,3 +136,46 @@ class PostUpdateView(UpdateView):
 def about(request):
 
     return HttpResponse(request,"yes")
+@login_required
+def like_post(request, board_id, topic_id, post_id):
+    post = get_object_or_404(Post, pk=post_id)
+    
+    # إذا كان معجباً مسبقاً، نزيل الإعجاب ونحذف الإشعار
+    if request.user in post.likes.all():
+        post.likes.remove(request.user)
+        is_liked = False
+        # حذف الإشعار عند إزالة الإعجاب
+        Notification.objects.filter(to_user=post.created_by, from_user=request.user, notification_type='like', post=post).delete()
+    
+    # إذا لم يكن معجباً، نضيف الإعجاب ونرسل إشعاراً
+    else:
+        post.likes.add(request.user)
+        is_liked = True
+        
+        # إنشاء إشعار (بشرط ألا يكون المستخدم قد أعجب بمنشور نفسه!)
+        if request.user != post.created_by:
+            Notification.objects.create(
+                to_user=post.created_by,
+                from_user=request.user,
+                notification_type='like',
+                post=post
+            )
+            
+    return JsonResponse({
+        'is_liked': is_liked,
+        'likes_count': post.likes.count()
+    })
+@login_required
+def notifications_list(request):
+    # جلب إشعارات المستخدم الحالي وترتيبها من الأحدث للأقدم
+    notifications = request.user.notifications.all().order_by('-created_at')
+    
+    # (اختياري) تحديث حالة الإشعارات لتصبح "مقروءة" بمجرد فتح الصفحة
+    request.user.notifications.filter(is_read=False).update(is_read=True)
+    
+    return render(request, 'notifications.html', {'notifications': notifications})
+@login_required
+def delete_notification(request, pk):
+    notification = get_object_or_404(Notification, pk=pk, to_user=request.user)
+    notification.delete()
+    return redirect('notifications_list')
