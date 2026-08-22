@@ -6,10 +6,11 @@ from .models import Topic,Post
 from django.utils.decorators import method_decorator
 from django.utils import timezone
 from django.views.generic import UpdateView
-
+from .models import Notification
 from .forms import NewTopicForm,PostForm
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count
+from django.http import JsonResponse
 from django.core.paginator import Paginator
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 
@@ -123,3 +124,32 @@ class PostUpdateView(UpdateView):
 def about(request):
 
     return HttpResponse(request,"yes")
+@login_required
+def like_post(request, board_id, topic_id, post_id):
+    post = get_object_or_404(Post, pk=post_id)
+    
+    # إذا كان معجباً مسبقاً، نزيل الإعجاب ونحذف الإشعار
+    if request.user in post.likes.all():
+        post.likes.remove(request.user)
+        is_liked = False
+        # حذف الإشعار عند إزالة الإعجاب
+        Notification.objects.filter(to_user=post.created_by, from_user=request.user, notification_type='like', post=post).delete()
+    
+    # إذا لم يكن معجباً، نضيف الإعجاب ونرسل إشعاراً
+    else:
+        post.likes.add(request.user)
+        is_liked = True
+        
+        # إنشاء إشعار (بشرط ألا يكون المستخدم قد أعجب بمنشور نفسه!)
+        if request.user != post.created_by:
+            Notification.objects.create(
+                to_user=post.created_by,
+                from_user=request.user,
+                notification_type='like',
+                post=post
+            )
+            
+    return JsonResponse({
+        'is_liked': is_liked,
+        'likes_count': post.likes.count()
+    })
