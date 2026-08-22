@@ -95,6 +95,51 @@
         .btn-signup:hover {
             background-color: #166fe5;
         }
+             /* الألوان الأساسية (الوضع الفاتح) */
+:root {
+    --bg-color: #f0f2f5;
+    --text-color: #050505;
+    --card-bg: #ffffff;
+    --border-color: #ced0d4;
+    --comment-bg: #f0f2f5;
+}
+
+/* الألوان عندما يتم تفعيل الوضع الليلي */
+body.dark-mode {
+    --bg-color: #18191a;
+    --text-color: #e4e6eb;
+    --card-bg: #242526;
+    --border-color: #3e4042;
+    --comment-bg: #3a3b3c;
+}
+
+/* تطبيق المتغيرات على الموقع بطريقة سلسة */
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* تعديل البطاقات والمنشورات لتستجيب للوضع الليلي */
+.dark-mode .post-card, 
+.dark-mode .card, 
+.dark-mode .comment-section,
+.dark-mode .post-footer {
+    background-color: var(--card-bg) !important;
+    border-color: var(--border-color) !important;
+}
+
+.dark-mode .post-title, 
+.dark-mode .post-author, 
+.dark-mode .comment-author,
+.dark-mode .text-muted {
+    color: var(--text-color) !important;
+}
+
+.dark-mode .comment-content {
+    background-color: var(--comment-bg) !important;
+    color: var(--text-color) !important;
+}
     </style>
 </head>
 <body>
@@ -106,7 +151,22 @@
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#mainMenu" aria-controls="mainMenu" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
-
+<!-- زر التبديل للوضع الليلي -->
+<button id="darkModeToggle" class="btn btn-outline-secondary rounded-pill ms-3">
+    🌙
+</button>
+{% if user.is_authenticated %}
+<li class="nav-item me-3 d-flex align-items-center">
+    <a href="{% url 'notifications_list' %}" class="nav-link position-relative" style="font-size: 1.2rem;" title="Notifications">
+        🔔
+        {% if user.notifications.count > 0 %}
+        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">
+            {{ user.notifications.count }}
+        </span>
+        {% endif %}
+    </a>
+</li>
+{% endif %}
    <div class="collapse navbar-collapse" id="mainMenu">
     {% if user.is_authenticated %}
     
@@ -159,6 +219,34 @@
     {% block content %}
     {% endblock %}
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const toggleBtn = document.getElementById('darkModeToggle');
+    const body = document.body;
+    
+    // 1. التحقق من ذاكرة المتصفح: هل المستخدم اختار الوضع الليلي مسبقاً؟
+    if (localStorage.getItem('theme') === 'dark') {
+        body.classList.add('dark-mode');
+        toggleBtn.textContent = '☀️'; // تغيير الأيقونة للشمس
+    }
+
+    // 2. التفاعل عند الضغط على الزر
+    toggleBtn.addEventListener('click', function() {
+        body.classList.toggle('dark-mode'); // تبديل الكلاس
+        
+        // إذا أصبح الوضع ليلياً، احفظه في الذاكرة وغيّر الأيقونة
+        if (body.classList.contains('dark-mode')) {
+            localStorage.setItem('theme', 'dark');
+            toggleBtn.textContent = '☀️';
+        } else {
+            // إذا عاد للوضع الفاتح
+            localStorage.setItem('theme', 'light');
+            toggleBtn.textContent = '🌙';
+        }
+    });
+});
+</script>
 {% endblock body %}
 
 <script src="{% static 'js/jquery-3.4.1.min.js' %}"></script>
