@@ -7,6 +7,11 @@
 {% endblock %}
 
 {% block content %}
+<!-- فورم مخفي لجلب كود الحماية بأمان (مهم جداً لعمل الإعجاب) -->
+<form id="csrf-form" style="display: none;">
+    {% csrf_token %}
+</form>
+
 <style>
     /* تصميم البطاقة الأساسية */
     .post-card {
@@ -101,20 +106,20 @@
         flex-shrink: 0;
     }
     .comment-content {
-        background-color: #f0f2f5; /* لون فقاعة التعليق الرمادي */
+        background-color: #f0f2f5;
         padding: 8px 12px;
-        border-radius: 18px; /* جعل الحواف دائرية مثل تعليق فيسبوك */
+        border-radius: 18px;
         max-width: calc(100% - 46px);
     }
     .comment-author {
-        font-size: 0.85rem; /* خط أصغر لاسم المستخدم */
+        font-size: 0.85rem;
         font-weight: bold;
         color: #050505;
         display: block;
         margin-bottom: 2px;
     }
     .comment-text {
-        font-size: 0.85rem; /* خط أصغر للنص */
+        font-size: 0.85rem;
         color: #1c1e21;
         line-height: 1.4;
     }
@@ -168,16 +173,12 @@
             </div>
         </div>
 
-        <!-- محتوى المنشور الأساسي (عنوان الموضوع فقط) -->
-        <!-- محتوى المنشور الأساسي -->
         <div class="post-body">
             <!-- عنوان الموضوع -->
             <a href="{% url 'topic_posts' board.pk topic.pk %}" class="post-title {% if not topic.image %}mb-3{% endif %}">
                 {{ topic.subject }}
             </a>
             
-            <!-- عرض الصورة إذا كانت موجودة في الموضوع -->
-           <!-- عرض الصورة إذا كانت موجودة في الموضوع -->
             {% if topic.image %}
             <div class="post-image-container mt-3 mb-3 text-center" style="background-color: #f8f9fa; border-radius: 8px; border: 1px solid #e4e6eb; padding: 10px;">
                 <img src="{{ topic.image.url }}" alt="Topic Image" style="max-width: 100%; max-height: 600px; height: auto; object-fit: contain; border-radius: 4px;">
@@ -187,8 +188,8 @@
 
         <div class="post-footer d-flex justify-content-between align-items-center">
             
-            <!-- زر الإعجاب (يعمل على المنشور الأول للموضوع) -->
-            {% with first_post=topic.posts.first %}
+            <!-- زر الإعجاب (تم تصحيح topic.posts إلى topic.post) -->
+            {% with first_post=topic.post.first %}
                 {% if first_post %}
                 <button class="btn btn-sm like-btn rounded-pill px-3 {% if user in first_post.likes.all %}btn-primary{% else %}btn-outline-primary{% endif %}" 
                         data-url="{% url 'like_post' board.pk topic.pk first_post.pk %}">
@@ -196,7 +197,7 @@
                     (<span class="like-count fw-bold">{{ first_post.likes.count }}</span>)
                 </button>
                 {% else %}
-                <div></div> <!-- مساحة فارغة في حال لم يوجد منشور -->
+                <div></div> 
                 {% endif %}
             {% endwith %}
 
@@ -209,16 +210,15 @@
                 </div>
             </div>
         </div>
+        
         <!-- قسم التعليق المصغر أسفل المنشور -->
         {% with first_post=topic.post.first %}
             {% if first_post %}
             <div class="comment-section">
                 <div class="comment-box">
-                    <!-- صورة مصغرة لصاحب التعليق -->
                     <div class="comment-avatar">
                         {{ first_post.created_by.username|make_list|first }}
                     </div>
-                    <!-- فقاعة التعليق -->
                     <div class="comment-content">
                         <span class="comment-author">{{ first_post.created_by.username }}</span>
                         <div class="comment-text">
@@ -226,7 +226,6 @@
                         </div>
                     </div>
                 </div>
-                <!-- زر View More تحت التعليق مباشرة بمسافة بادئة ليكون متناسق -->
                 <div style="margin-left: 46px; margin-top: 6px;">
                     <a href="{% url 'topic_posts' board.pk topic.pk %}" class="view-more-btn">
                         View more replies...
@@ -284,5 +283,59 @@
     </ul>
   </nav>
 {% endif %}
+
+<!-- كود التفاعل المباشر (AJAX) لزر الإعجاب -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const csrfInput = document.querySelector('#csrf-form input[name=csrfmiddlewaretoken]');
+    if (!csrfInput) return;
+    const csrfToken = csrfInput.value;
+
+    const likeButtons = document.querySelectorAll('.like-btn');
+    
+    likeButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault(); 
+            const url = this.getAttribute('data-url');
+            const btn = this;
+            
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'Content-Type': 'application/json'
+                },
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('رفض السيرفر الطلب');
+                return response.json();
+            })
+            .then(data => {
+                const icon = btn.querySelector('.like-icon');
+                const text = btn.querySelector('.like-text');
+                const count = btn.querySelector('.like-count');
+                
+                if (count) count.textContent = data.likes_count;
+                
+                if (data.is_liked) {
+                    btn.classList.remove('btn-outline-primary');
+                    btn.classList.add('btn-primary');
+                    if (icon) icon.textContent = '❤️';
+                    if (text) text.textContent = 'Liked';
+                } else {
+                    btn.classList.remove('btn-primary');
+                    btn.classList.add('btn-outline-primary');
+                    if (icon) icon.textContent = '🤍';
+                    if (text) text.textContent = 'Like';
+                }
+            })
+            .catch(error => {
+                console.error(error);
+                alert("حدث خطأ أثناء الإعجاب، ربما تحتاج لتسجيل الدخول!");
+            });
+        });
+    });
+});
+</script>
 
 {% endblock %}
