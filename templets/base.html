@@ -155,7 +155,6 @@ body {
 <button id="darkModeToggle" class="btn btn-outline-secondary rounded-pill ms-3">
     🌙
 </button>
-<!-- أيقونة الجرس مع عدد الإشعارات -->
 {% if user.is_authenticated %}
 <li class="nav-item me-3 d-flex align-items-center">
     <a href="{% url 'notifications_list' %}" class="nav-link position-relative" style="font-size: 1.2rem;" title="Notifications">

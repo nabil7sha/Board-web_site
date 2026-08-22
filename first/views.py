@@ -174,3 +174,8 @@ def notifications_list(request):
     request.user.notifications.filter(is_read=False).update(is_read=True)
     
     return render(request, 'notifications.html', {'notifications': notifications})
+@login_required
+def delete_notification(request, pk):
+    notification = get_object_or_404(Notification, pk=pk, to_user=request.user)
+    notification.delete()
+    return redirect('notifications_list')
